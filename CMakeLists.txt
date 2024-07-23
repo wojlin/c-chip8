@@ -13,6 +13,7 @@ include_directories(include)
 set(SOURCES
     src/main.c
     src/chip8.c
+    src/chip8_opcodes.c
 )
 
 # Add the executable
