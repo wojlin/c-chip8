@@ -1,0 +1,45 @@
+# Contributing to Chip8 Emulator
+
+Thank you for considering contributing to the Chip8 Emulator project! Your help is greatly appreciated. To ensure a smooth process, please follow the guidelines below:
+
+## How to Contribute
+
+1. **Report Issues**: If you encounter any bugs or have feature requests, please open an issue on the GitHub repository. Provide as much detail as possible to help us understand and address the problem.
+
+2. **Submit Pull Requests**:
+   - **Fork the Repository**: Start by forking the repository to your own GitHub account.
+   - **Clone Your Fork**: Clone the forked repository to your local machine.
+   - **Create a Branch**: Create a new branch for your changes.
+     ```sh
+     git checkout -b feature/your-feature
+     ```
+   - **Make Changes**: Implement your changes or improvements.
+   - **Test Your Changes**: Ensure your changes work as expected and do not break existing functionality.
+   - **Commit Your Changes**: Commit your changes with a descriptive message.
+     ```sh
+     git add .
+     git commit -m "Add feature: description of your feature"
+     ```
+   - **Push to Your Fork**: Push your changes to your forked repository.
+     ```sh
+     git push origin feature/your-feature
+     ```
+   - **Create a Pull Request**: Open a pull request on the original repository. Provide a clear description of the changes and why they are being made.
+
+3. **Follow Coding Standards**: Adhere to the project's coding style and conventions to maintain consistency.
+
+4. **Documentation**: If you make significant changes or add new features, please update the documentation accordingly.
+
+## Code of Conduct
+
+Please be respectful and considerate to others in all interactions. Follow the [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a positive and inclusive environment.
+
+## Questions?
+
+If you have any questions or need further assistance, feel free to reach out by opening an issue on the GitHub repository or contacting [your email](mailto:your.email@example.com).
+
+Thank you for contributing!
+
+---
+
+Replace placeholders like `feature/your-feature` and `your.email@example.com` with the appropriate details.
