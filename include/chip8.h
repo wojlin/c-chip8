@@ -105,4 +105,7 @@ int chip8_execute_opcode(Chip8 *chip8, Opcode *opcode);
 /* Function to run Chip8 */
 void chip8_run(Chip8 *chip8);
 
+/* waits so the processor run at rate 500Hz*/
+void chip8_wait_for_next_tick();
+
 #endif /* CHIP8_H */

@@ -29,7 +29,7 @@ const OpcodeEntry opcode_table[OPCODE_AMOUNT] = {
     { 0xE09E, 0xF0FF, chip8_execute_opcode_skip_key },              // Ex9E
     { 0xE0A1, 0xF0FF, chip8_execute_opcode_skip_not_key },          // ExA1
     { 0xF007, 0xF0FF, chip8_execute_opcode_load_delay_timer },      // Fx07
-    { 0xD00A, 0xF0FF, chip8_execute_opcode_wait_key },              // Fx0A
+    { 0xF00A, 0xF0FF, chip8_execute_opcode_wait_key },              // Fx0A
     { 0xF015, 0xF0FF, chip8_execute_opcode_set_delay_timer },       // Fx15
     { 0xF018, 0xF0FF, chip8_execute_opcode_set_sound_timer },       // Fx18
     { 0xF01E, 0xF0FF, chip8_execute_opcode_add_i },                 // Fx1E
@@ -144,7 +144,7 @@ void chip8_execute_opcode_add(Chip8 *chip8, Opcode *opcode)
 /* Set Vx = Vx - Vy, set VF = NOT borrow. */
 void chip8_execute_opcode_subtract_x(Chip8 *chip8, Opcode *opcode)
 {   
-    chip8->v[0x0F] = ((int16_t)chip8->v[opcode->x] - (int16_t)chip8->v[opcode->y] > 0) ? 1 : 0;
+    chip8->v[0x0F] = ((int16_t)chip8->v[opcode->x] - (int16_t)chip8->v[opcode->y] >= 0) ? 1 : 0;
     chip8->v[opcode->x] -= chip8->v[opcode->y];
     chip8->program_counter += 2;
 }
@@ -160,7 +160,7 @@ void chip8_execute_opcode_divide(Chip8 *chip8, Opcode *opcode)
 /* Set Vx = Vy - Vx, set VF = NOT borrow. */
 void chip8_execute_opcode_subtract_y(Chip8 *chip8, Opcode *opcode)
 {   
-    chip8->v[0x0F] = ((int16_t)chip8->v[opcode->y] - (int16_t)chip8->v[opcode->x] < 0) ? 1 : 0;
+    chip8->v[0x0F] = ((int16_t)chip8->v[opcode->y] - (int16_t)chip8->v[opcode->x] >= 0) ? 1 : 0;
     chip8->v[opcode->x] = chip8->v[opcode->y] - chip8->v[opcode->x];
     chip8->program_counter += 2;
 }
@@ -170,7 +170,6 @@ void chip8_execute_opcode_multiply(Chip8 *chip8, Opcode *opcode)
 {   
     chip8->v[0x0F] = (chip8->v[opcode->x] & 0x80) >> 7;
     chip8->v[opcode->x] <<= 1;
-    chip8->v[opcode->x] &= 0xFF;
     chip8->program_counter += 2;
 }
 
@@ -211,6 +210,7 @@ void chip8_execute_opcode_draw(Chip8 *chip8, Opcode *opcode)
 
     chip8->display_changed = 1;
 
+    uint8_t collision = 0;
     for(int n = 0; n < amount; n++)
     {
         uint8_t value = chip8->ram[chip8->i_register + n];
@@ -219,14 +219,16 @@ void chip8_execute_opcode_draw(Chip8 *chip8, Opcode *opcode)
             uint8_t px_pos_x = (pos_x + i) % 64;
             uint8_t px_pos_y = (pos_y + n) % 32;
 
-            uint8_t is_on = value & (1 << i);
+            uint8_t is_on = (value >> i) & 1;
             uint8_t current_state = chip8_get_display_state(chip8, px_pos_x, px_pos_y);
-                
-            chip8->v[0x0F] = current_state & is_on;
+            
+            if (current_state & is_on) collision = 1;
+
             chip8_set_display_state(chip8, px_pos_x, px_pos_y, current_state ^ is_on);         
         }
     }
 
+    chip8->v[0x0F] = collision;
     chip8->program_counter += 2;
 }
 

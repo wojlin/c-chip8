@@ -46,6 +46,7 @@ typedef struct {
 // Function Prototypes
 void print_launch_options(const Arguments *args);
 void print_display(Chip8 *chip8);
+void print_timers(Chip8 *chip8);
 void print_keyboard(Chip8 *chip8);
 void print_opcode(const Opcode *opcode);
 void clear_terminal();
@@ -57,7 +58,6 @@ void get_args(Arguments *args, int argc, char *argv[]);
 void handle_args(const Arguments *args, Data *program_data);
 void handle_raw_data(const char *data, Data *program_data);
 void handle_file_data(const char *data, Data *program_data);
-void wait_for_next_tick(clock_t loop_start_time);
 Chip8 config_app(int argc, char *argv[]);
 
 // Function Definitions
@@ -81,6 +81,13 @@ void print_display(Chip8 *chip8) {
         }
         chip8->display_changed = 0;
     } 
+}
+
+void print_timers(Chip8 *chip8) {
+    printf("/////////////////////////// timers ////////////////////////////\n");
+    printf("sound timer: %u   ", chip8->sound_timer);  
+    printf("delay timer: %u ", chip8->delay_timer);  
+    printf("\n");  
 }
 
 void print_keyboard(Chip8 *chip8) {
@@ -257,16 +264,7 @@ void handle_file_data(const char *data, Data *program_data) {
     }
 }
 
-void wait_for_next_tick(clock_t loop_start_time) {
-    clock_t loop_end_time = clock();
-    double processing_time_ms = ((double)(loop_end_time - loop_start_time) / CLOCKS_PER_SEC) * 1000;
 
-    // Calculate the sleep duration
-    double sleep_time_ms = TIME_PER_TICK_MS - processing_time_ms;
-    if (sleep_time_ms > 0) {
-        sleep_ms((unsigned int)sleep_time_ms);
-    }
-}
 
 Chip8 config_app(int argc, char *argv[])
 {
@@ -288,19 +286,18 @@ int main(int argc, char *argv[]) {
     uint8_t result = 0;
     while (!result) {
 
-        clock_t loop_start_time = clock();
         read_keyboard(&chip8);
         Opcode opcode = chip8_fetch_opcode(&chip8);
         result = chip8_execute_opcode(&chip8, &opcode);
         if(chip8_should_buzz(&chip8))
         {
             sound_buzzer();
-        }
-
-        //print_opcode(&opcode);
+        }   
         //sleep_ms(8000);
         print_display(&chip8);
-        wait_for_next_tick(loop_start_time);
+        //chip8_decrement_timers(&chip8);
+        //print_timers(&chip8);
+        //print_opcode(&opcode);
     }
 
     return 0;

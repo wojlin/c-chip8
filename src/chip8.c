@@ -33,6 +33,7 @@ void chip8_init(Chip8 *chip8) {
     chip8->delay_timer = 0;
     chip8->i_register = 0;
     chip8->program_counter = MEMORY_READ_START;
+    chip8->timer = 0;
 
     /* Initialize RAM memory to zero */
     memset(chip8->ram, 0, RAM_SIZE);
@@ -56,15 +57,16 @@ void chip8_init(Chip8 *chip8) {
 /* Load a program into Chip8's RAM */
 void chip8_load_ram(Chip8 *chip8, const uint8_t program[PROGRAM_MEMORY_SIZE], size_t program_size) {
     memcpy(chip8->ram + MEMORY_READ_START, program, program_size); 
+    memcpy(chip8->ram + FONT_SET_START, chip8_font_set, FONT_SET_SIZE);
 }
 
 /* decrement timers */
 void chip8_decrement_timers(Chip8 *chip8) {
     if (chip8->delay_timer > 0) {
-        --chip8->delay_timer;
+        chip8->delay_timer -= 1;
     }
     if (chip8->sound_timer > 0) {
-        --chip8->sound_timer;
+        chip8->sound_timer -= 1;
     }
 }
 
@@ -76,11 +78,11 @@ uint8_t chip8_should_buzz(Chip8 *chip8)
 
 /* handle sound and delay timer */
 void chip8_handle_timer_updates(Chip8* chip8) {
-    clock_t current_time = clock();
-    double elapsed_time = (double)(current_time - chip8->timer) / CLOCKS_PER_SEC * 1000;
-    if (elapsed_time >= TIME_PER_TIMER_TICK_MS) {  // 60Hz timer update
+    chip8->timer += 1;
+    if(chip8->timer > TIME_PER_TIMER_TICK_MS)
+    {
         chip8_decrement_timers(chip8);
-        chip8->timer = current_time;
+        chip8->timer = 0;
     }
 }
 
@@ -153,6 +155,9 @@ Opcode chip8_fetch_opcode(Chip8 *chip8)
 /* Function to fetch opcode */
 int chip8_execute_opcode(Chip8 *chip8, Opcode *opcode)
 {
+    chip8_wait_for_next_tick();
+    chip8_handle_timer_updates(chip8);
+
     int handled = 1;
     for (int i = 0; i < sizeof(opcode_table) / sizeof(OpcodeEntry); ++i) {
         if ((opcode->instruction & opcode_table[i].mask) == opcode_table[i].opcode_prefix) 
@@ -162,10 +167,11 @@ int chip8_execute_opcode(Chip8 *chip8, Opcode *opcode)
             break;
         }
     }
-
-    chip8_handle_timer_updates(chip8);
-
     return handled;
+}
+
+void chip8_wait_for_next_tick(clock_t loop_start_time) {
+    sleep_ms(TIME_PER_TICK_MS);
 }
 
 /* Function to run Chip8 */
