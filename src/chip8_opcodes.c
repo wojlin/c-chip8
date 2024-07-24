@@ -1,5 +1,6 @@
 #include "../include/chip8_opcodes.h"
 #include "../include/chip8.h"
+#include "../include/keyboard.h"
 
 const OpcodeEntry opcode_table[OPCODE_AMOUNT] = {
     { 0x00E0, 0xFFFF, chip8_execute_opcode_cls },                   // 00E0
@@ -15,7 +16,7 @@ const OpcodeEntry opcode_table[OPCODE_AMOUNT] = {
     { 0x8001, 0xF00F, chip8_execute_opcode_or },                    // 8xy1
     { 0x8002, 0xF00F, chip8_execute_opcode_and },                   // 8xy2
     { 0x8003, 0xF00F, chip8_execute_opcode_xor },                   // 8xy3
-    { 0x8005, 0xF00F, chip8_execute_opcode_add },                   // 8xy4
+    { 0x8004, 0xF00F, chip8_execute_opcode_add },                   // 8xy4
     { 0x8005, 0xF00F, chip8_execute_opcode_subtract_x },            // 8xy5
     { 0x8006, 0xF00F, chip8_execute_opcode_divide },                // 8xy6
     { 0x8007, 0xF00F, chip8_execute_opcode_subtract_y },            // 8xy7
@@ -28,10 +29,10 @@ const OpcodeEntry opcode_table[OPCODE_AMOUNT] = {
     { 0xE09E, 0xF0FF, chip8_execute_opcode_skip_key },              // Ex9E
     { 0xE0A1, 0xF0FF, chip8_execute_opcode_skip_not_key },          // ExA1
     { 0xF007, 0xF0FF, chip8_execute_opcode_load_delay_timer },      // Fx07
-    { 0xD00A, 0xFFFF, chip8_execute_opcode_wait_key },              // Fx0A
+    { 0xD00A, 0xF0FF, chip8_execute_opcode_wait_key },              // Fx0A
     { 0xF015, 0xF0FF, chip8_execute_opcode_set_delay_timer },       // Fx15
     { 0xF018, 0xF0FF, chip8_execute_opcode_set_sound_timer },       // Fx18
-    { 0xF01E, 0xFFFF, chip8_execute_opcode_add_i },                 // Fx1E
+    { 0xF01E, 0xF0FF, chip8_execute_opcode_add_i },                 // Fx1E
     { 0xF029, 0xF0FF, chip8_execute_opcode_load_font},              // Fx29
     { 0xF033, 0xF0FF, chip8_execute_opcode_load_bcd },              // Fx33
     { 0xF055, 0xF0FF, chip8_execute_opcode_load_registers},         // Fx55
@@ -52,8 +53,10 @@ void chip8_execute_opcode_cls(Chip8 *chip8, Opcode *opcode)
 /* return from a subroutine */
 void chip8_execute_opcode_ret(Chip8 *chip8, Opcode *opcode)
 {
-    chip8->program_counter = chip8->stack[chip8->stack_pointer];
     chip8->stack_pointer -= 1;
+    chip8->program_counter = chip8->stack[chip8->stack_pointer];
+    chip8->program_counter += 2;
+    
 }
 
 /* Jump to location nnn */
@@ -65,8 +68,8 @@ void chip8_execute_opcode_jp(Chip8 *chip8, Opcode *opcode)
 /* Call subroutine at nnn */
 void chip8_execute_opcode_call(Chip8 *chip8, Opcode *opcode)
 {
-    chip8->stack_pointer += 1;
     chip8->stack[chip8->stack_pointer] = chip8->program_counter;
+    chip8->stack_pointer += 1;
     chip8->program_counter = opcode->nnn;
 }
 
@@ -112,21 +115,21 @@ void chip8_execute_opcode_load(Chip8 *chip8, Opcode *opcode)
 /* Set Vx = Vx OR Vy. */
 void chip8_execute_opcode_or(Chip8 *chip8, Opcode *opcode)
 {
-    chip8->v[opcode->x] |= chip8->v[opcode->y];
+    chip8->v[opcode->x] = (chip8->v[opcode->x] | chip8->v[opcode->y]);
     chip8->program_counter += 2;
 }
 
 /* Set Vx = Vx AND Vy. */
 void chip8_execute_opcode_and(Chip8 *chip8, Opcode *opcode)
 {
-    chip8->v[opcode->x] &= chip8->v[opcode->y];
+    chip8->v[opcode->x] = (chip8->v[opcode->x] & chip8->v[opcode->y]);
     chip8->program_counter += 2;
 }
 
 /* Set Vx = Vx XOR Vy. */
 void chip8_execute_opcode_xor(Chip8 *chip8, Opcode *opcode)
 {
-    chip8->v[opcode->x] ^= chip8->v[opcode->y];
+    chip8->v[opcode->x] = (chip8->v[opcode->x] ^ chip8->v[opcode->y]);
     chip8->program_counter += 2;
 }
 
@@ -141,7 +144,7 @@ void chip8_execute_opcode_add(Chip8 *chip8, Opcode *opcode)
 /* Set Vx = Vx - Vy, set VF = NOT borrow. */
 void chip8_execute_opcode_subtract_x(Chip8 *chip8, Opcode *opcode)
 {   
-    chip8->v[0x0F] = ((int16_t)chip8->v[opcode->x] - (int16_t)chip8->v[opcode->y] < 0) ? 1 : 0;
+    chip8->v[0x0F] = ((int16_t)chip8->v[opcode->x] - (int16_t)chip8->v[opcode->y] > 0) ? 1 : 0;
     chip8->v[opcode->x] -= chip8->v[opcode->y];
     chip8->program_counter += 2;
 }
@@ -188,6 +191,7 @@ void chip8_execute_opcode_set_i(Chip8 *chip8, Opcode *opcode)
 void chip8_execute_opcode_jump(Chip8 *chip8, Opcode *opcode)
 {   
     chip8->program_counter = opcode->nnn + chip8->v[0];
+    chip8->program_counter += 2;
 }
 
 /* Set Vx = random byte AND kk. */
@@ -205,16 +209,21 @@ void chip8_execute_opcode_draw(Chip8 *chip8, Opcode *opcode)
     uint8_t pos_y = chip8->v[opcode->y];
     uint8_t amount = opcode->n;
 
+    chip8->display_changed = 1;
+
     for(int n = 0; n < amount; n++)
     {
         uint8_t value = chip8->ram[chip8->i_register + n];
         for (int i = 7; i >= 0; i--) 
         {
+            uint8_t px_pos_x = (pos_x + i) % 64;
+            uint8_t px_pos_y = (pos_y + n) % 32;
+
             uint8_t is_on = value & (1 << i);
-            uint8_t current_state = chip8_get_display_state(chip8, pos_x + i, pos_y + n);
+            uint8_t current_state = chip8_get_display_state(chip8, px_pos_x, px_pos_y);
                 
             chip8->v[0x0F] = current_state & is_on;
-            chip8_set_display_state(chip8, pos_x + i, pos_y + n, current_state ^ is_on);         
+            chip8_set_display_state(chip8, px_pos_x, px_pos_y, current_state ^ is_on);         
         }
     }
 
@@ -243,8 +252,8 @@ void chip8_execute_opcode_load_delay_timer(Chip8 *chip8, Opcode *opcode)
 /* Wait for a key press, store the value of the key in Vx. */
 void chip8_execute_opcode_wait_key(Chip8 *chip8, Opcode *opcode)
 {   
-    // TODO
-    chip8->v[opcode->x] = 
+    uint8_t key = wait_for_keypress(chip8);
+    chip8->v[opcode->x] = key;
     chip8->program_counter += 2;
 }
 

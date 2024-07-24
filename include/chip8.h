@@ -7,6 +7,14 @@
 #include <stdint.h>
 #include <string.h>
 
+#ifdef _WIN32
+    #include <windows.h>
+    #define sleep_ms(ms) Sleep(ms)  // Sleep function on Windows
+#else
+    #include <unistd.h>
+    #define sleep_ms(ms) usleep((ms) * 1000)  // usleep takes microseconds on Unix-like systems
+#endif
+
 #define RAM_SIZE 4096
 #define REGISTERS_SIZE 16
 #define STACK_SIZE 16
@@ -18,6 +26,10 @@
 #define DISPLAY_WIDTH 64
 #define DISPLAY_HEIGHT 32
 #define OPCODE_AMOUNT 34
+#define CPU_FREQUENCY 500  // 500 Hz for the main loop
+#define TIMER_FREQUENCY 60  // 60 Hz for timer updates
+#define TIME_PER_TICK_MS (1000 / CPU_FREQUENCY)  // Time per tick in milliseconds
+#define TIME_PER_TIMER_TICK_MS (1000 / TIMER_FREQUENCY)  // Timer update interval in milliseconds
 
 typedef struct
 {
@@ -31,6 +43,8 @@ typedef struct
     uint16_t stack[STACK_SIZE];         /* Stack */
     uint16_t keys;                      /* Keyboard state */
     uint64_t display[DISPLAY_HEIGHT];   /* display */
+    clock_t timer;                      /* timer */
+    uint8_t display_changed;            /* flag for redrawing display only if needed */
 } Chip8;
 
 typedef struct
@@ -60,6 +74,15 @@ void chip8_init(Chip8 *chip8);
 
 /* Function to load a program into Chip8's RAM */
 void chip8_load_ram(Chip8 *chip8, const uint8_t *program, size_t program_size);
+
+/* return 1 if the buzzer should play 0 if not */
+uint8_t chip8_should_buzz(Chip8 *chip8);
+
+/* decrement timers */
+void chip8_decrement_timers(Chip8* chip8);
+
+/* handle sound and delay timer */
+void chip8_handle_timer_updates(Chip8* chip8);
 
 /* Function to get keyboard key state */
 uint8_t chip8_get_keyboard_state(Chip8 *chip8, uint8_t key_index);

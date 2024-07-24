@@ -58,6 +58,32 @@ void chip8_load_ram(Chip8 *chip8, const uint8_t program[PROGRAM_MEMORY_SIZE], si
     memcpy(chip8->ram + MEMORY_READ_START, program, program_size); 
 }
 
+/* decrement timers */
+void chip8_decrement_timers(Chip8 *chip8) {
+    if (chip8->delay_timer > 0) {
+        --chip8->delay_timer;
+    }
+    if (chip8->sound_timer > 0) {
+        --chip8->sound_timer;
+    }
+}
+
+/* return 1 if the buzzer should play 0 if not */
+uint8_t chip8_should_buzz(Chip8 *chip8)
+{
+    return (chip8->sound_timer > 0) ? 1 : 0;
+}
+
+/* handle sound and delay timer */
+void chip8_handle_timer_updates(Chip8* chip8) {
+    clock_t current_time = clock();
+    double elapsed_time = (double)(current_time - chip8->timer) / CLOCKS_PER_SEC * 1000;
+    if (elapsed_time >= TIME_PER_TIMER_TICK_MS) {  // 60Hz timer update
+        chip8_decrement_timers(chip8);
+        chip8->timer = current_time;
+    }
+}
+
 /* Function to get keyboard key state */
 uint8_t chip8_get_keyboard_state(Chip8 *chip8, uint8_t key_index) {
     if (key_index >= KEYBOARD_SIZE) {
@@ -136,6 +162,9 @@ int chip8_execute_opcode(Chip8 *chip8, Opcode *opcode)
             break;
         }
     }
+
+    chip8_handle_timer_updates(chip8);
+
     return handled;
 }
 
