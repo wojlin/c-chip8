@@ -27,6 +27,7 @@ add_executable(chip8 ${SOURCES})
 # Link SDL2
 target_link_libraries(chip8 ${SDL2_LIBRARIES})
 
+
 # Optionally, specify compiler warnings
 if(CMAKE_COMPILER_IS_GNUCXX)
     target_compile_options(chip8 PRIVATE -Wall -Wextra)
