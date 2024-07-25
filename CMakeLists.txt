@@ -19,6 +19,9 @@ set(SOURCES
     src/chip8.c
     src/chip8_opcodes.c
     src/keyboard.c
+    src/display.c
+    src/params.c
+    src/utils.c
 )
 
 # Add the executable

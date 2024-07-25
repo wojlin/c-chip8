@@ -1,6 +1,11 @@
 #include "keyboard.h"
 
-// Function to map SDL keys to CHIP-8 key indices
+/**
+ * Maps SDL keycodes to CHIP-8 key indices.
+ * 
+ * @param key SDL keycode.
+ * @return Corresponding CHIP-8 key index or 0xFF if invalid.
+ */
 static uint8_t sdl_key_to_chip8_key(SDL_Keycode key) {
     switch (key) {
         case SDLK_1: return 0x1;
@@ -23,19 +28,25 @@ static uint8_t sdl_key_to_chip8_key(SDL_Keycode key) {
     }
 }
 
+/**
+ * Reads the keyboard state using SDL and updates the CHIP-8 keyboard state.
+ * 
+ * @param chip8 Pointer to the Chip8 structure.
+ * @return 1 if the ESC key was pressed, 0 otherwise.
+ */
 int read_keyboard_sdl(Chip8 *chip8) {
     const Uint8 *state = SDL_GetKeyboardState(NULL);
 
     // Check ESC key for exiting
-    uint8_t esc_state = state[SDL_GetScancodeFromKey(SDLK_ESCAPE)] ? 1 : 0;
-    if (esc_state) {
+    if (state[SDL_GetScancodeFromKey(SDLK_ESCAPE)]) {
         return 1; // Return 1 to indicate that ESC was pressed
     }
 
-    // Iterate over all CHIP-8 keys
+    // Iterate over all CHIP-8 keys and update their state
     for (int i = 0; i < KEYBOARD_SIZE; ++i) {
-        // Map CHIP-8 key index to SDL keycode
         SDL_Scancode scancode = SDL_SCANCODE_UNKNOWN;
+
+        // Map CHIP-8 key index to SDL scancode
         switch (i) {
             case 0x1: scancode = SDL_SCANCODE_1; break;
             case 0x2: scancode = SDL_SCANCODE_2; break;
@@ -64,8 +75,12 @@ int read_keyboard_sdl(Chip8 *chip8) {
     return 0; // Return 0 to indicate normal operation
 }
 
-
-
+/**
+ * Maps a character to a CHIP-8 key index.
+ * 
+ * @param key Character representing the key.
+ * @return Corresponding CHIP-8 key index or 16 if invalid.
+ */
 uint8_t map_key_to_index(char key) {
     switch (key) {
         case '1': return 1;
@@ -90,6 +105,13 @@ uint8_t map_key_to_index(char key) {
 
 #ifdef _WIN32
     #include <conio.h>
+
+    /**
+     * Waits for a key press and returns the corresponding CHIP-8 key index (Windows version).
+     * 
+     * @param chip8 Pointer to the Chip8 structure.
+     * @return The CHIP-8 key index or 0xFF if an invalid key was pressed.
+     */
     uint8_t wait_for_keypress(Chip8 *chip8) {
         while (1) {
             if (_kbhit()) {
@@ -103,9 +125,15 @@ uint8_t map_key_to_index(char key) {
         }
     }
 
+    /**
+     * Reads the keyboard state and updates the CHIP-8 keyboard state (Windows version).
+     * 
+     * @param chip8 Pointer to the Chip8 structure.
+     * @return 1 if the ESC key was pressed, 0 otherwise.
+     */
     int read_keyboard(Chip8 *chip8) {
         for (int i = 0; i < 16; i++) {
-            chip8_set_keyboard_state(chip8, i, 0);  // Assume all keys are up
+            chip8_set_keyboard_state(chip8, i, 0); // Assume all keys are up
         }
         if (_kbhit()) {
             char key = _getch();
@@ -114,7 +142,7 @@ uint8_t map_key_to_index(char key) {
             }
             uint8_t key_index = map_key_to_index(key);
             if (key_index < 16) {
-                chip8_set_keyboard_state(chip8, key_index, 1);  // Key down
+                chip8_set_keyboard_state(chip8, key_index, 1); // Key down
             }
         }
         return 0;
@@ -122,9 +150,14 @@ uint8_t map_key_to_index(char key) {
 
 #else
     #include <termios.h>
-#include <unistd.h>
-#include <fcntl.h>
+    #include <unistd.h>
+    #include <fcntl.h>
 
+    /**
+     * Checks if a key has been pressed (Unix-like systems).
+     * 
+     * @return 1 if a key is pressed, 0 otherwise.
+     */
     int kbhit(void) {
         struct termios oldt, newt;
         int ch;
@@ -150,20 +183,27 @@ uint8_t map_key_to_index(char key) {
         return 0;
     }
 
+    /**
+     * Reads the keyboard state and updates the CHIP-8 keyboard state (Unix-like systems).
+     * 
+     * @param chip8 Pointer to the Chip8 structure.
+     * @return 1 if the ESC key was pressed, 0 otherwise.
+     */
     int read_keyboard(Chip8 *chip8) {
         for (int i = 0; i < 16; i++) {
-            chip8_set_keyboard_state(chip8, i, 0);  // Assume all keys are up
+            chip8_set_keyboard_state(chip8, i, 0); // Assume all keys are up
         }
         if (kbhit()) {
-            char key = getchar();  
+            char key = getchar();
             if (key == 27) { // ESC key
-            return 1;
+                return 1;
             }
             uint8_t key_index = map_key_to_index(key);
             if (key_index < 16) {
-                chip8_set_keyboard_state(chip8, key_index, 1);  // Key down
+                chip8_set_keyboard_state(chip8, key_index, 1); // Key down
             }
         }
         return 0;
     }
+
 #endif

@@ -3,106 +3,276 @@
 
 #include "chip8.h"
 
-/* clear display */
+/**
+ * @brief Clear the display.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_cls(Chip8 *chip8, Opcode *opcode);
 
-/* return from a subroutine */
+/**
+ * @brief Return from a subroutine.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_ret(Chip8 *chip8, Opcode *opcode);
 
-/* Jump to location nnn */
+/**
+ * @brief Jump to location nnn.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_jp(Chip8 *chip8, Opcode *opcode);
 
-/* Call subroutine at nnn */
+/**
+ * @brief Call subroutine at nnn.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_call(Chip8 *chip8, Opcode *opcode);
 
-/* Skip next instruction if Vx = kk */
+/**
+ * @brief Skip the next instruction if Vx equals kk.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_skip_equal_byte(Chip8 *chip8, Opcode *opcode);
 
-/* Skip next instruction if Vx != kk */
+/**
+ * @brief Skip the next instruction if Vx does not equal kk.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_skip_not_equal_byte(Chip8 *chip8, Opcode *opcode);
 
-/* Skip next instruction if Vx = Vy */
+/**
+ * @brief Skip the next instruction if Vx equals Vy.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_skip_equal(Chip8 *chip8, Opcode *opcode);
 
-/* Set Vx = kk */
+/**
+ * @brief Set Vx to kk.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_load_byte(Chip8 *chip8, Opcode *opcode);
 
-/* Set Vx = Vx + kk */
+/**
+ * @brief Add kk to Vx.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_add_byte(Chip8 *chip8, Opcode *opcode);
 
-/* Set Vx = Vy */
+/**
+ * @brief Set Vx to Vy.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_load(Chip8 *chip8, Opcode *opcode);
 
-/* Set Vx = Vx OR Vy. */
+/**
+ * @brief Set Vx to Vx OR Vy.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_or(Chip8 *chip8, Opcode *opcode);
 
-/* Set Vx = Vx OR Vy. */
+/**
+ * @brief Set Vx to Vx AND Vy.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_and(Chip8 *chip8, Opcode *opcode);
 
-/* Set Vx = Vx OR Vy. */
+/**
+ * @brief Set Vx to Vx XOR Vy.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_xor(Chip8 *chip8, Opcode *opcode);
 
-/* Set Vx = Vx + Vy, set VF = carry. */
+/**
+ * @brief Add Vy to Vx, set VF to carry.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_add(Chip8 *chip8, Opcode *opcode);
 
-/* Set Vx = Vx - Vy, set VF = NOT borrow. */
+/**
+ * @brief Subtract Vy from Vx, set VF to NOT borrow.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_subtract_x(Chip8 *chip8, Opcode *opcode);
 
-/* Set Vx = Vx SHR 1. */
+/**
+ * @brief Shift Vx right by 1 bit.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_divide(Chip8 *chip8, Opcode *opcode);
 
-/* Set Vx = Vy - Vx, set VF = NOT borrow. */
+/**
+ * @brief Subtract Vx from Vy, set VF to NOT borrow.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_subtract_y(Chip8 *chip8, Opcode *opcode);
 
-/* Set Vx = Vx SHR 1. */
+/**
+ * @brief Multiply Vx and Vy (interpret as a right shift operation).
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_multiply(Chip8 *chip8, Opcode *opcode);
 
-/* Skip next instruction if Vx != Vy. */
+/**
+ * @brief Skip the next instruction if Vx does not equal Vy.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_skip_not_equal(Chip8 *chip8, Opcode *opcode);
 
-/* Set I = nnn. */
+/**
+ * @brief Set I to nnn.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_set_i(Chip8 *chip8, Opcode *opcode);
 
-/* Jump to location nnn + V0. */
+/**
+ * @brief Jump to location nnn + V0.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_jump(Chip8 *chip8, Opcode *opcode);
 
-/* Set Vx = random byte AND kk. */
+/**
+ * @brief Set Vx to a random byte AND kk.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_random(Chip8 *chip8, Opcode *opcode);
 
-/* Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision. */
+/**
+ * @brief Display an n-byte sprite starting at memory location I at (Vx, Vy), set VF to collision.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_draw(Chip8 *chip8, Opcode *opcode);
 
-/* Skip next instruction if key with the value of Vx is pressed. */
+/**
+ * @brief Skip the next instruction if the key with the value of Vx is pressed.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_skip_key(Chip8 *chip8, Opcode *opcode);
 
-/* Skip next instruction if key with the value of Vx is pressed. */
+/**
+ * @brief Skip the next instruction if the key with the value of Vx is not pressed.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_skip_not_key(Chip8 *chip8, Opcode *opcode);
 
-/* Set Vx = delay timer value. */
+/**
+ * @brief Set Vx to the delay timer value.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_load_delay_timer(Chip8 *chip8, Opcode *opcode);
 
-/* Wait for a key press, store the value of the key in Vx. */
+/**
+ * @brief Wait for a key press, store the value of the key in Vx.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_wait_key(Chip8 *chip8, Opcode *opcode);
 
-/* Set delay timer = Vx. */
+/**
+ * @brief Set the delay timer to Vx.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_set_delay_timer(Chip8 *chip8, Opcode *opcode);
 
-/* Set sound timer = Vx. */
+/**
+ * @brief Set the sound timer to Vx.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_set_sound_timer(Chip8 *chip8, Opcode *opcode);
 
-/* Set I = I + Vx. */
+/**
+ * @brief Add Vx to I.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_add_i(Chip8 *chip8, Opcode *opcode);
 
-/* Set I = location of sprite for digit Vx. */
+/**
+ * @brief Set I to the location of the sprite for digit Vx.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_load_font(Chip8 *chip8, Opcode *opcode);
 
-/* Store BCD representation of Vx in memory locations I, I+1, and I+2. */
+/**
+ * @brief Store the BCD representation of Vx in memory locations I, I+1, and I+2.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_load_bcd(Chip8 *chip8, Opcode *opcode);
 
-/* Store registers V0 through Vx in memory starting at location I. */
+/**
+ * @brief Store registers V0 through Vx in memory starting at location I.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_load_registers(Chip8 *chip8, Opcode *opcode);
 
-/* Read registers V0 through Vx from memory starting at location I. */
+/**
+ * @brief Read registers V0 through Vx from memory starting at location I.
+ *
+ * @param chip8 Pointer to the Chip8 state structure.
+ * @param opcode Pointer to the Opcode structure containing the instruction.
+ */
 void chip8_execute_opcode_load_memory(Chip8 *chip8, Opcode *opcode);
 
 #endif /* CHIP8_OPCODES_H */

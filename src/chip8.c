@@ -1,7 +1,7 @@
 #include "../include/chip8.h"
 #include "../include/chip8_opcodes.h"
 
-/* Define the font set used by Chip8 */
+/* Define the font set used by CHIP-8 */
 const uint8_t chip8_font_set[FONT_SET_SIZE] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -21,11 +21,12 @@ const uint8_t chip8_font_set[FONT_SET_SIZE] = {
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
-
-
-/* Initialize a Chip8 structure to default values */
+/**
+ * Initialize a CHIP-8 structure with default values.
+ * 
+ * @param chip8 Pointer to the Chip8 structure to initialize.
+ */
 void chip8_init(Chip8 *chip8) {
-
     srand((unsigned int)time(NULL));
 
     chip8->stack_pointer = 0;
@@ -54,13 +55,23 @@ void chip8_init(Chip8 *chip8) {
     chip8->keys = 0;
 }
 
-/* Load a program into Chip8's RAM */
+/**
+ * Load a program into CHIP-8's RAM.
+ * 
+ * @param chip8 Pointer to the Chip8 structure.
+ * @param program Pointer to the program data.
+ * @param program_size Size of the program data.
+ */
 void chip8_load_ram(Chip8 *chip8, const uint8_t program[PROGRAM_MEMORY_SIZE], size_t program_size) {
     memcpy(chip8->ram + MEMORY_READ_START, program, program_size); 
     memcpy(chip8->ram + FONT_SET_START, chip8_font_set, FONT_SET_SIZE);
 }
 
-/* decrement timers */
+/**
+ * Decrement the delay and sound timers.
+ * 
+ * @param chip8 Pointer to the Chip8 structure.
+ */
 void chip8_decrement_timers(Chip8 *chip8) {
     if (chip8->delay_timer > 0) {
         chip8->delay_timer -= 1;
@@ -70,23 +81,36 @@ void chip8_decrement_timers(Chip8 *chip8) {
     }
 }
 
-/* return 1 if the buzzer should play 0 if not */
-uint8_t chip8_should_buzz(Chip8 *chip8)
-{
+/**
+ * Check if the sound timer has expired and the buzzer should play.
+ * 
+ * @param chip8 Pointer to the Chip8 structure.
+ * @return 1 if the buzzer should play, 0 otherwise.
+ */
+uint8_t chip8_should_buzz(Chip8 *chip8) {
     return (chip8->sound_timer > 0) ? 1 : 0;
 }
 
-/* handle sound and delay timer */
-void chip8_handle_timer_updates(Chip8* chip8) {
+/**
+ * Handle timer updates, including decrementing timers.
+ * 
+ * @param chip8 Pointer to the Chip8 structure.
+ */
+void chip8_handle_timer_updates(Chip8 *chip8) {
     chip8->timer += 1;
-    if(chip8->timer > TIME_PER_TIMER_TICK_MS)
-    {
+    if (chip8->timer > TIME_PER_TIMER_TICK_MS) {
         chip8_decrement_timers(chip8);
         chip8->timer = 0;
     }
 }
 
-/* Function to get keyboard key state */
+/**
+ * Get the state of a keyboard key.
+ * 
+ * @param chip8 Pointer to the Chip8 structure.
+ * @param key_index Index of the key to check.
+ * @return 1 if the key is pressed, 0 otherwise.
+ */
 uint8_t chip8_get_keyboard_state(Chip8 *chip8, uint8_t key_index) {
     if (key_index >= KEYBOARD_SIZE) {
         // Invalid key index, return 0
@@ -95,7 +119,13 @@ uint8_t chip8_get_keyboard_state(Chip8 *chip8, uint8_t key_index) {
     return (chip8->keys & (1 << key_index)) ? 1 : 0;
 }
 
-/* Function to set keyboard key state */
+/**
+ * Set the state of a keyboard key.
+ * 
+ * @param chip8 Pointer to the Chip8 structure.
+ * @param key_index Index of the key to set.
+ * @param state State to set (1 for pressed, 0 for not pressed).
+ */
 void chip8_set_keyboard_state(Chip8 *chip8, uint8_t key_index, uint8_t state) {
     if (key_index >= KEYBOARD_SIZE) {
         // Invalid key index
@@ -109,59 +139,84 @@ void chip8_set_keyboard_state(Chip8 *chip8, uint8_t key_index, uint8_t state) {
     }
 }
 
-/* Function to get display pixel state */
-uint8_t chip8_get_display_state(Chip8 *chip8, uint8_t pos_x, uint8_t pos_y) {
-    if (pos_x >= DISPLAY_WIDTH || pos_y >= DISPLAY_HEIGHT) {
+/**
+ * Get the state of a display pixel.
+ * 
+ * @param chip8 Pointer to the Chip8 structure.
+ * @param x_pos X position of the pixel.
+ * @param y_pos Y position of the pixel.
+ * @return 1 if the pixel is set, 0 otherwise.
+ */
+uint8_t chip8_get_display_state(Chip8 *chip8, uint8_t x_pos, uint8_t y_pos) {
+    if (x_pos >= DISPLAY_WIDTH || y_pos >= DISPLAY_HEIGHT) {
         // Invalid pixel index, return 0
         return 0;
     }
-    return (chip8->display[pos_y] & (1ULL << pos_x)) ? 1 : 0;
+    uint64_t mask = (uint64_t)1 << (DISPLAY_WIDTH - 1 - x_pos);
+    return (chip8->display[y_pos] & mask) ? 1 : 0;
 }
 
-/* Function to set display pixel state */
-void chip8_set_display_state(Chip8 *chip8, uint8_t pos_x, uint8_t pos_y, uint8_t state) {
-    if (pos_x >= DISPLAY_WIDTH || pos_y >= DISPLAY_HEIGHT) {
+/**
+ * Set the state of a display pixel.
+ * 
+ * @param chip8 Pointer to the Chip8 structure.
+ * @param x_pos X position of the pixel.
+ * @param y_pos Y position of the pixel.
+ * @param state State to set (1 for on, 0 for off).
+ */
+void chip8_set_display_state(Chip8 *chip8, uint8_t x_pos, uint8_t y_pos, uint8_t state) {
+    if (x_pos >= DISPLAY_WIDTH || y_pos >= DISPLAY_HEIGHT) {
         // Invalid pixel index, return
         return;
     }
 
+    uint64_t mask = (uint64_t)1 << (DISPLAY_WIDTH - 1 - x_pos);
+
     if (state) {
-        chip8->display[pos_y] |= (1ULL << pos_x);  // Set the bit
+        chip8->display[y_pos] |= mask;  // Set the bit
     } else {
-        chip8->display[pos_y] &= ~(1ULL << pos_x); // Clear the bit
+        chip8->display[y_pos] &= ~mask; // Clear the bit
     }
 }
 
-/* Function to fetch opcode */
-Opcode chip8_fetch_opcode(Chip8 *chip8)
-{
+/**
+ * Fetch the current opcode from CHIP-8 memory.
+ * 
+ * @param chip8 Pointer to the Chip8 structure.
+ * @return The fetched Opcode.
+ */
+Opcode chip8_fetch_opcode(Chip8 *chip8) {
     Opcode opcode;
 
     uint16_t pc = chip8->program_counter;
 
-    /* fetch instruction */
-    opcode.instruction = chip8->ram[pc]  << 8| chip8->ram[pc+1];
+    /* Fetch instruction */
+    opcode.instruction = (chip8->ram[pc] << 8) | chip8->ram[pc + 1];
 
-    /* decode instruction */
-    opcode.nnn = opcode.instruction & 0x0FFF;        /* Lowest 12 bits */
-    opcode.n = opcode.instruction & 0x000F;           /* Lowest 4 bits */
-    opcode.x = (opcode.instruction & 0x0F00) >> 8;    /* 4 bits from high byte */
-    opcode.y = (opcode.instruction & 0x00F0) >> 4;    /* 4 bits from low byte */
-    opcode.kk = opcode.instruction & 0x00FF;          /* Lowest 8 bits */
+    /* Decode instruction */
+    opcode.nnn = opcode.instruction & 0x0FFF;        // Lowest 12 bits
+    opcode.n = opcode.instruction & 0x000F;           // Lowest 4 bits
+    opcode.x = (opcode.instruction & 0x0F00) >> 8;    // 4 bits from high byte
+    opcode.y = (opcode.instruction & 0x00F0) >> 4;    // 4 bits from low byte
+    opcode.kk = opcode.instruction & 0x00FF;          // Lowest 8 bits
 
     return opcode;
 }
 
-/* Function to fetch opcode */
-int chip8_execute_opcode(Chip8 *chip8, Opcode *opcode)
-{
+/**
+ * Execute a given opcode.
+ * 
+ * @param chip8 Pointer to the Chip8 structure.
+ * @param opcode Pointer to the Opcode to execute.
+ * @return 0 if the opcode was handled, 1 otherwise.
+ */
+int chip8_execute_opcode(Chip8 *chip8, Opcode *opcode) {
     chip8_wait_for_next_tick();
     chip8_handle_timer_updates(chip8);
 
     int handled = 1;
-    for (int i = 0; i < sizeof(opcode_table) / sizeof(OpcodeEntry); ++i) {
-        if ((opcode->instruction & opcode_table[i].mask) == opcode_table[i].opcode_prefix) 
-        {
+    for (int i = 0; i < OPCODE_AMOUNT; ++i) {
+        if ((opcode->instruction & opcode_table[i].mask) == opcode_table[i].opcode_prefix) {
             opcode_table[i].handler(chip8, opcode);
             handled = 0;
             break;
@@ -170,19 +225,9 @@ int chip8_execute_opcode(Chip8 *chip8, Opcode *opcode)
     return handled;
 }
 
-void chip8_wait_for_next_tick(clock_t loop_start_time) {
+/**
+ * Wait to maintain a constant CPU frequency.
+ */
+void chip8_wait_for_next_tick() {
     sleep_ms(TIME_PER_TICK_MS);
-}
-
-/* Function to run Chip8 */
-void chip8_run(Chip8 *chip8)
-{   
-    while(1)
-    {
-        Opcode opcode = chip8_fetch_opcode(chip8);
-        int result = chip8_execute_opcode(chip8, &opcode);
-        if(result){
-            break;
-        }        
-    }   
 }
