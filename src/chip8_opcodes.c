@@ -254,8 +254,25 @@ void chip8_execute_opcode_load_delay_timer(Chip8 *chip8, Opcode *opcode)
 /* Wait for a key press, store the value of the key in Vx. */
 void chip8_execute_opcode_wait_key(Chip8 *chip8, Opcode *opcode)
 {   
-    uint8_t key = wait_for_keypress(chip8);
-    chip8->v[opcode->x] = key;
+    uint8_t key_states[16] = {0}; // Array to store initial states of the keys
+    uint8_t initialized = 0;      // Flag to indicate if initial states have been stored
+
+    while (1) {
+        for (uint8_t i = 0; i < 16; i++) {
+            uint8_t current_state = chip8_get_keyboard_state(chip8, i);
+            if (!initialized) {
+                // Initialize the key_states array with the initial states
+                key_states[i] = current_state;
+            } else if (key_states[i] != current_state) {
+                // If any key state has changed, break out of the loop
+                chip8->v[opcode->x] = i;
+                return;
+            }
+        }
+        initialized = 1;
+    }
+
+    
     chip8->program_counter += 2;
 }
 

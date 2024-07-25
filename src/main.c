@@ -8,6 +8,7 @@
 #include <getopt.h>
 #include <string.h>
 #include <ctype.h>
+#include <SDL2/SDL.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -30,6 +31,13 @@ void sound_buzzer() {
 
 
 #define ERROR_MSG "CHIP 8 EMULATOR FAILED TO START\n"
+#define PIXEL_SIZE 20 // Size of each pixel in the window
+#define ZERO_R 0
+#define ZERO_G 0
+#define ZERO_B 0
+#define ONE_R 255
+#define ONE_G 255
+#define ONE_B 255
 
 typedef struct {
     char *ui;
@@ -42,6 +50,13 @@ typedef struct {
     size_t program_size;
     uint8_t program[PROGRAM_MEMORY_SIZE];
 } Data;
+
+typedef struct
+{
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+} Display;
+
 
 // Function Prototypes
 void print_launch_options(const Arguments *args);
@@ -58,7 +73,11 @@ void get_args(Arguments *args, int argc, char *argv[]);
 void handle_args(const Arguments *args, Data *program_data);
 void handle_raw_data(const char *data, Data *program_data);
 void handle_file_data(const char *data, Data *program_data);
-Chip8 config_app(int argc, char *argv[]);
+int run_app(int argc, char *argv[]);
+Display createDisplay();
+void removeDisplay(Display * display);
+void drawDisplay(Display * display, Chip8 *chip8);
+void initSDL();
 
 // Function Definitions
 
@@ -111,7 +130,7 @@ void clear_terminal() {
     #ifdef _WIN32
         system("cls");
     #else
-        system("clear");
+        int res = system("clear");
     #endif
 }
 
@@ -194,7 +213,7 @@ void read_file_to_program(const char* file_path, uint8_t *program, size_t *progr
 
 void get_args(Arguments *args, int argc, char *argv[]) {
     int opt;
-    char *usage = ERROR_MSG "\nUsage: %s --ui <terminal>/<sdl> --type <file>/<raw> --data <path to file>/<bytes>\n";
+    char *usage = ERROR_MSG "\nUsage: %s --ui <terminal>/<window> --type <file>/<raw> --data <path to file>/<bytes>\n";
 
     static struct option long_options[] = {
         {"ui", required_argument, 0, 'u'},
@@ -265,8 +284,69 @@ void handle_file_data(const char *data, Data *program_data) {
 }
 
 
+void initSDL()
+{
+    // Initialize SDL
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
+        exit(1);
+    }
+}
 
-Chip8 config_app(int argc, char *argv[])
+Display createDisplay() {
+    Display display;
+
+    // Create a window
+    display.window = SDL_CreateWindow("CHIP8 EMULATOR",
+                                      SDL_WINDOWPOS_UNDEFINED,
+                                      SDL_WINDOWPOS_UNDEFINED,
+                                      DISPLAY_WIDTH * PIXEL_SIZE, DISPLAY_HEIGHT * PIXEL_SIZE,
+                                      SDL_WINDOW_SHOWN);
+    if (display.window == NULL) {
+        printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
+        SDL_Quit();
+        exit(1);
+    }
+
+    // Create a renderer
+    display.renderer = SDL_CreateRenderer(display.window, -1, SDL_RENDERER_ACCELERATED);
+    if (display.renderer == NULL) {
+        printf("Renderer could not be created! SDL_Error: %s\n", SDL_GetError());
+        SDL_DestroyWindow(display.window);
+        SDL_Quit();
+        exit(1);
+    }
+
+    return display;
+}
+
+void removeDisplay(Display * display)
+{
+    SDL_DestroyRenderer(display->renderer);
+    SDL_DestroyWindow(display->window);
+    SDL_Quit();
+}
+
+void drawDisplay(Display *display, Chip8 *chip8) {
+    if(chip8->display_changed)
+    {
+        for (int y = 0; y < DISPLAY_HEIGHT; ++y) {
+            for (int x = 0; x < DISPLAY_WIDTH; ++x) {
+                if (chip8->display[y] & ((uint64_t)1 << (DISPLAY_WIDTH - 1 - x))) {
+                    SDL_SetRenderDrawColor(display->renderer, ONE_R, ONE_G, ONE_B, SDL_ALPHA_OPAQUE); // White
+                } else {
+                    SDL_SetRenderDrawColor(display->renderer, ZERO_R, ZERO_G, ZERO_B, SDL_ALPHA_OPAQUE); // Black
+                }
+                SDL_Rect rect = { x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE };
+                SDL_RenderFillRect(display->renderer, &rect);
+            }
+        }
+        SDL_RenderPresent(display->renderer); // Update the display
+        chip8->display_changed = 0;
+    }
+}
+
+int run_app(int argc, char *argv[])
 {
     Data data = {0};
     Arguments args = {NULL, NULL, NULL, 0};
@@ -276,29 +356,72 @@ Chip8 config_app(int argc, char *argv[])
     Chip8 chip8;
     chip8_init(&chip8);
     chip8_load_ram(&chip8, data.program, data.program_size);
-    return chip8;
-}
 
-int main(int argc, char *argv[]) {
     
-    Chip8 chip8 = config_app(argc, argv);
+    Display display;
+    SDL_Event e;
+
+    if(strstr(args.ui, "window") != NULL)
+    {
+        initSDL();
+        display = createDisplay();
+    }
 
     uint8_t result = 0;
+
+    
     while (!result) {
 
-        read_keyboard(&chip8);
+        while (SDL_PollEvent(&e) != 0) {
+            if (e.type == SDL_QUIT) 
+            {
+                result = 1;
+                break;
+            }
+        }
+
+        
+
         Opcode opcode = chip8_fetch_opcode(&chip8);
         result = chip8_execute_opcode(&chip8, &opcode);
         if(chip8_should_buzz(&chip8))
         {
             sound_buzzer();
-        }   
+        }     
+
+        if(strstr(args.ui, "terminal") != NULL)
+        {
+            if(read_keyboard(&chip8))
+            {
+                result = 1;
+                break;
+            }
+            print_display(&chip8);
+        }
+        else if(strstr(args.ui, "window") != NULL)
+        {
+            if(read_keyboard_sdl(&chip8))
+            {
+                result = 1;
+                break;
+            }
+            drawDisplay(&display, &chip8);
+            print_opcode(&opcode);
+        }
+
         //sleep_ms(8000);
-        print_display(&chip8);
-        //chip8_decrement_timers(&chip8);
-        //print_timers(&chip8);
         //print_opcode(&opcode);
     }
 
+    if (strstr(args.ui, "window") != NULL) {
+        removeDisplay(&display);
+    }
+
+    SDL_Quit();
+
     return 0;
+}
+
+int main(int argc, char *argv[]) {
+    return run_app(argc, argv);
 }

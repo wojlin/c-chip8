@@ -19,19 +19,30 @@ This is a Chip8 emulator written in C. It supports cross-platform usage with two
 To run the emulator, use the following command-line options:
 
 ```bash
-./chip8-emulator --ui <terminal|sdl> --type <file|raw> --data <path to file|bytes>
+./chip8-emulator --ui <terminal|window> --type <file|raw> --data <path to file|bytes>
 ```
 
 
 ### Parameters
 
-- `--ui <terminal|sdl>`: Selects the display mode. Use `terminal` for text-based output or `sdl` for graphical output.
+- `--ui <terminal|window>`: Selects the display mode. Use `terminal` for text-based output or `window` for graphical output.
 - `--type <file|raw>`: Specifies the method for loading game data. Use `file` to read from a file or `raw` to input raw byte data.
 - `--data <path to file|bytes>`: If `--type` is `file`, provide the path to the game file. If `--type` is `raw`, input the raw bytes of the game data as a space-separated list of hexadecimal values.
 
 ## Building
 
 To build the project, follow these steps:
+
+0. **Download dependencies**
+
+    - linux:
+    ```sh
+    sudo apt-get install libsdl2-dev
+    ```
+    - windows
+    ```sh
+    https://www.libsdl.org/
+    ```
 
 1. **Clone the repository:**
 
@@ -79,7 +90,7 @@ To build the project, follow these steps:
 ### SDL Display with Raw Byte Input
 
 ```bash
-./chip8-emulator --ui sdl --type raw --data 00E0 6000 6100 6200 6300 6400 6500 6600
+./chip8-emulator --ui window --type raw --data 00E0 6000 6100 6200 6300 6400 6500 6600
 ```
 
 

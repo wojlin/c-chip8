@@ -6,6 +6,10 @@ project(CHIP8Emulator C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# Find SDL2
+find_package(SDL2 REQUIRED)
+include_directories(${SDL2_INCLUDE_DIRS})
+
 # Add the include directory
 include_directories(include)
 
@@ -18,9 +22,12 @@ set(SOURCES
 )
 
 # Add the executable
-add_executable(chip8_emulator ${SOURCES})
+add_executable(chip8 ${SOURCES})
+
+# Link SDL2
+target_link_libraries(chip8 ${SDL2_LIBRARIES})
 
 # Optionally, specify compiler warnings
 if(CMAKE_COMPILER_IS_GNUCXX)
-    target_compile_options(chip8_emulator PRIVATE -Wall -Wextra)
+    target_compile_options(chip8 PRIVATE -Wall -Wextra)
 endif()
